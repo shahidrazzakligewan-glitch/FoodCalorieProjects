@@ -12,14 +12,13 @@ export default function Footer() {
                             <span>🍎</span> NutriVision
                         </Link>
                         <p className="footer__tagline">
-                            AI-powered food calorie estimation using deep learning and computer vision.
+                            Nutrition information and calorie guidance for a healthier lifestyle.
                         </p>
                     </div>
 
                     <div className="footer__links-group">
                         <h4>Quick Links</h4>
                         <Link to="/">Home</Link>
-                        <Link to="/calorie-calculator">Calorie Calculator</Link>
                         <Link to="/about">About</Link>
                         <Link to="/contact">Contact</Link>
                     </div>

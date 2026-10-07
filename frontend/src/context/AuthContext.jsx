@@ -3,6 +3,24 @@ import { supabase } from '../lib/supabase';
 
 const AuthContext = createContext({});
 
+const formatAuthError = (error) => {
+    const message = error?.message || '';
+    const normalizedMessage = message.toLowerCase();
+
+    if (
+        normalizedMessage.includes('failed to fetch') ||
+        normalizedMessage.includes('network') ||
+        normalizedMessage.includes('err_name_not_resolved')
+    ) {
+        return {
+            ...error,
+            message: 'Cannot reach Supabase. Check the project URL, project status, and network connection.'
+        };
+    }
+
+    return error || { message: 'Unable to reach the authentication service.' };
+};
+
 export const useAuth = () => useContext(AuthContext);
 
 export function AuthProvider({ children }) {
@@ -12,12 +30,88 @@ export function AuthProvider({ children }) {
 
     const initRef = useRef(false);
 
+    const fetchProfile = async (userId, emailOverride = '') => {
+        if (!userId) {
+            setUserProfile(null);
+            return;
+        }
+
+        if (!supabase) {
+            setUserProfile({ id: userId, email: emailOverride, role: 'user' });
+            return;
+        }
+
+        try {
+            const { data, error } = await supabase
+                .from('profiles')
+                .select('*')
+                .eq('id', userId)
+                .single();
+
+            if (error && error.code === 'PGRST116') {
+                const { data: sessionData } = await supabase.auth.getSession();
+                const sessionUser = sessionData?.session?.user;
+
+                const { data: newProfile, error: createError } = await supabase
+                    .from('profiles')
+                    .insert([{
+                        id: userId,
+                        email: sessionUser?.email || emailOverride,
+                        role: 'user',
+                        created_at: new Date().toISOString()
+                    }])
+                    .select()
+                    .single();
+
+                if (!createError) {
+                    setUserProfile(newProfile);
+                    return;
+                }
+            }
+
+            if (data) {
+                setUserProfile(data);
+            } else {
+                setUserProfile({ id: userId, email: emailOverride, role: 'user' });
+            }
+        } catch (err) {
+            console.error('Error fetching profile:', err);
+            setUserProfile({ id: userId, email: emailOverride, role: 'user' });
+        }
+    };
+
     useEffect(() => {
         let sessionInterval = null;
-        let currentSessionId = null;
 
-        // Track user session
+        const initializeAuth = async () => {
+            if (!supabase) {
+                setUser(null);
+                setUserProfile(null);
+                setLoading(false);
+                initRef.current = true;
+                return;
+            }
+
+            try {
+                const { data: { session } } = await supabase.auth.getSession();
+                setUser(session?.user ?? null);
+                if (session?.user) {
+                    await fetchProfile(session.user.id, session.user.email);
+                    startSession(session.user.id);
+                }
+            } catch (error) {
+                console.warn('Supabase session restore failed, using local demo mode.', error);
+                setUser(null);
+                setUserProfile(null);
+            } finally {
+                setLoading(false);
+                initRef.current = true;
+            }
+        };
+
         const startSession = async (userId) => {
+            if (!supabase) return;
+
             const sessionStartTime = Date.now();
             try {
                 const { data, error } = await supabase.from('user_sessions').insert([{
@@ -29,44 +123,40 @@ export function AuthProvider({ children }) {
                 }]).select().single();
 
                 if (error) console.error('Session insert error:', error);
-                if (data) currentSessionId = data.id;
-            } catch (e) { console.warn('Session tracking:', e); }
-
-            // Update session every 1 minute
-            sessionInterval = setInterval(async () => {
-                if (currentSessionId) {
-                    await supabase.from('user_sessions')
-                        .update({
-                            last_active_at: new Date().toISOString(),
-                            duration_minutes: Math.round((Date.now() - sessionStartTime) / 60000)
-                        })
-                        .eq('id', currentSessionId).catch(() => { });
+                if (data) {
+                    const currentSessionId = data.id;
+                    sessionInterval = setInterval(async () => {
+                        if (currentSessionId) {
+                            await supabase.from('user_sessions')
+                                .update({
+                                    last_active_at: new Date().toISOString(),
+                                    duration_minutes: Math.round((Date.now() - sessionStartTime) / 60000)
+                                })
+                                .eq('id', currentSessionId)
+                                .catch(() => {});
+                        }
+                    }, 60000);
                 }
-            }, 60000);
-        };
-
-        // Get initial session
-        const initializeAuth = async () => {
-            const { data: { session } } = await supabase.auth.getSession();
-            setUser(session?.user ?? null);
-            if (session?.user) {
-                await fetchProfile(session.user.id);
-                startSession(session.user.id);
+            } catch (e) {
+                console.warn('Session tracking failed:', e);
             }
-            setLoading(false);
-            initRef.current = true;
         };
 
         initializeAuth();
 
-        // Listen for auth changes (like logging in or out later)
+        if (!supabase) {
+            return () => {
+                if (sessionInterval) clearInterval(sessionInterval);
+            };
+        }
+
         const { data: { subscription } } = supabase.auth.onAuthStateChange(
             async (_event, session) => {
-                if (!initRef.current) return; // Prevent double firing on mount
+                if (!initRef.current) return;
 
                 setUser(session?.user ?? null);
                 if (session?.user) {
-                    await fetchProfile(session.user.id);
+                    await fetchProfile(session.user.id, session.user.email);
                     if (_event === 'SIGNED_IN') {
                         startSession(session.user.id);
                     }
@@ -84,100 +174,118 @@ export function AuthProvider({ children }) {
         };
     }, []);
 
-    const fetchProfile = async (userId) => {
+    const signUp = async (email, password, fullName) => {
+        if (!supabase) {
+            return {
+                data: null,
+                error: { message: 'Authentication is not configured. Set a valid Supabase URL and anon key.' }
+            };
+        }
+
         try {
-            const { data, error } = await supabase
-                .from('profiles')
-                .select('*')
-                .eq('id', userId)
-                .single();
-
-            if (error && error.code === 'PGRST116') {
-                // Profile doesn't exist yet, create one
-                // Instead of failing if user variable is null here, use getSession directly or fallback email
-                const { data: sessionData } = await supabase.auth.getSession();
-                const sessionUser = sessionData?.session?.user;
-
-                const { data: newProfile, error: createError } = await supabase
-                    .from('profiles')
-                    .insert([{
-                        id: userId,
-                        email: sessionUser?.email || '',
-                        role: 'user',
-                        created_at: new Date().toISOString()
-                    }])
-                    .select()
-                    .single();
-
-                if (!createError) {
-                    setUserProfile(newProfile);
-                    return;
-                }
-            }
-
-            if (data) {
-                setUserProfile(data);
-            } else {
-                // Failsafe: if no data and no error handled, just set a basic profile so app unblocks
-                setUserProfile({ id: userId, role: 'user' });
-            }
-        } catch (err) {
-            console.error('Error fetching profile:', err);
-            // Block infinite loading
-            setUserProfile({ id: userId, role: 'user' });
+            const { data, error } = await supabase.auth.signUp({
+                email,
+                password,
+                options: { data: { full_name: fullName } }
+            });
+            return { data, error: error ? formatAuthError(error) : null };
+        } catch (error) {
+            return { data: null, error: formatAuthError(error) };
         }
     };
 
-    const signUp = async (email, password, fullName) => {
-        const { data, error } = await supabase.auth.signUp({
-            email,
-            password,
-            options: {
-                data: { full_name: fullName }
-            }
-        });
-        return { data, error };
-    };
-
     const signIn = async (email, password) => {
-        const { data, error } = await supabase.auth.signInWithPassword({
-            email,
-            password
-        });
-        return { data, error };
+        if (!supabase) {
+            return {
+                data: null,
+                error: { message: 'Authentication is not configured. Set a valid Supabase URL and anon key.' }
+            };
+        }
+
+        try {
+            const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+            return { data, error: error ? formatAuthError(error) : null };
+        } catch (error) {
+            return { data: null, error: formatAuthError(error) };
+        }
     };
 
     const signInWithGoogle = async () => {
-        const { data, error } = await supabase.auth.signInWithOAuth({
-            provider: 'google',
-            options: {
-                redirectTo: 'https://ozhwqqegkxsmgqujelxd.supabase.co/auth/v1/callback',
-                queryParams: {
-                    access_type: 'offline',
-                    prompt: 'consent',
-                },
-            }
-        });
-        return { data, error };
+        if (!supabase) {
+            return {
+                data: null,
+                error: { message: 'Authentication is not configured. Set a valid Supabase URL and anon key.' }
+            };
+        }
+
+        try {
+            const { data, error } = await supabase.auth.signInWithOAuth({
+                provider: 'google',
+                options: {
+                    redirectTo: window.location.origin + '/signin',
+                    queryParams: { access_type: 'offline', prompt: 'consent' }
+                }
+            });
+            return { data, error: error ? formatAuthError(error) : null };
+        } catch (error) {
+            return { data: null, error: formatAuthError(error) };
+        }
     };
 
     const signOut = async () => {
-        const { error } = await supabase.auth.signOut();
-        return { error };
+        setUser(null);
+        setUserProfile(null);
+
+        if (!supabase) {
+            return { error: null };
+        }
+
+        try {
+            const { error } = await supabase.auth.signOut();
+            return { error };
+        } catch {
+            return { error: { message: 'Unable to reach the authentication service.' } };
+        }
     };
 
     const resetPassword = async (email) => {
-        const { data, error } = await supabase.auth.resetPasswordForEmail(email, {
-            redirectTo: window.location.origin + '/reset-password'
-        });
-        return { data, error };
+        if (!supabase) {
+            return {
+                data: null,
+                error: { message: 'Authentication is not configured. Set a valid Supabase URL and anon key.' }
+            };
+        }
+
+        try {
+            const { data, error } = await supabase.auth.resetPasswordForEmail(email, {
+                redirectTo: window.location.origin + '/reset-password'
+            });
+            return { data, error: error ? formatAuthError(error) : null };
+        } catch (error) {
+            return {
+                data: null,
+                error: formatAuthError(error)
+            };
+        }
     };
 
     const updatePassword = async (newPassword) => {
-        const { data, error } = await supabase.auth.updateUser({
-            password: newPassword
-        });
-        return { data, error };
+        if (!supabase) {
+            return {
+                data: null,
+                error: { message: 'Authentication is not configured. Set a valid Supabase URL and anon key.' }
+            };
+        }
+
+        try {
+            const { data, error } = await supabase.auth.updateUser({ password: newPassword });
+            return { data, error: error ? formatAuthError(error) : null };
+        } catch (error) {
+            return {
+                data: null,
+                error: formatAuthError(error)
+            };
+        }
     };
 
     const value = {
@@ -193,9 +301,5 @@ export function AuthProvider({ children }) {
         fetchProfile
     };
 
-    return (
-        <AuthContext.Provider value={value}>
-            {children}
-        </AuthContext.Provider>
-    );
+    return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }

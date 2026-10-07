@@ -6,26 +6,26 @@ export default function LandingPage() {
     const features = [
         {
             icon: <Camera size={28} />,
-            title: 'Snap & Analyze',
-            description: 'Upload a photo of your food and our YOLOv5 model detects individual items instantly.',
+            title: 'Food Guidance',
+            description: 'Explore popular foods and learn about their calorie values, portion ideas, and common nutrition facts.',
             color: 'var(--color-primary)'
         },
         {
             icon: <Brain size={28} />,
-            title: 'AI-Powered Estimation',
-            description: 'Leveraging Gemini AI and computer vision to accurately estimate calories from any fruit or food item.',
+            title: 'Calorie Facts',
+            description: 'Understand calorie basics and how different foods fit into a balanced diet without needing prediction tools.',
             color: 'var(--color-secondary)'
         },
         {
             icon: <BarChart3 size={28} />,
-            title: 'Track & Analyze',
-            description: 'View detailed analytics, track your calorie intake history, and gain insights into your nutrition.',
+            title: 'Track Habits',
+            description: 'Follow healthier food habits with simple, clear nutrition insight and everyday calorie awareness.',
             color: 'var(--color-accent)'
         },
         {
             icon: <Sparkles size={28} />,
-            title: 'Smart Dashboard',
-            description: 'Personalized dashboard with history, analytics charts, and comprehensive profile management.',
+            title: 'Healthy Lifestyle',
+            description: 'Build better food choices with easy educational guidance and practical nutrition support.',
             color: '#A78BFA'
         }
     ];
@@ -67,21 +67,21 @@ export default function LandingPage() {
                     </div>
 
                     <h1 className="hero__title animate-fade-in-up delay-100">
-                        Know What You Eat.
-                        <span className="hero__title-gradient"> Track Every Calorie.</span>
+                        Learn Your Food.
+                        <span className="hero__title-gradient"> Make Healthier Choices.</span>
                     </h1>
 
                     <p className="hero__subtitle animate-fade-in-up delay-200">
-                        Upload a food photo or search any fruit — our deep learning model and Gemini AI
-                        will estimate the calories for you in seconds. Start your nutrition journey today.
+                        Explore calorie information, healthy food guidance, and nutrition insights in a simple,
+                        easy-to-understand website designed for everyday wellness.
                     </p>
 
                     <div className="hero__actions animate-fade-in-up delay-300">
-                        <Link to="/calorie-calculator" className="btn btn-primary btn-lg">
-                            Try Calorie Calculator <ArrowRight size={18} />
+                        <Link to="/about" className="btn btn-primary btn-lg">
+                            Explore Nutrition <ArrowRight size={18} />
                         </Link>
-                        <Link to="/signup" className="btn btn-secondary btn-lg">
-                            Get Started Free
+                        <Link to="/contact" className="btn btn-secondary btn-lg">
+                            Contact Us
                         </Link>
                     </div>
 
@@ -140,23 +140,23 @@ export default function LandingPage() {
                     <div className="how-it-works__steps">
                         <div className="step">
                             <div className="step__number">01</div>
-                            <div className="step__icon">📸</div>
-                            <h3>Upload or Search</h3>
-                            <p>Take a photo of your food or search for any fruit in our calorie calculator.</p>
+                            <div className="step__icon">�</div>
+                            <h3>Explore Foods</h3>
+                            <p>Browse common foods and learn their calorie values and overall nutrition profile.</p>
                         </div>
                         <div className="step__connector"></div>
                         <div className="step">
                             <div className="step__number">02</div>
-                            <div className="step__icon">🧠</div>
-                            <h3>AI Analysis</h3>
-                            <p>Our YOLOv5 model detects food items. Gemini AI provides detailed nutritional info.</p>
+                            <div className="step__icon">🥗</div>
+                            <h3>Understand Nutrition</h3>
+                            <p>Learn how calories, portions, and nutrient balance affect your daily health goals.</p>
                         </div>
                         <div className="step__connector"></div>
                         <div className="step">
                             <div className="step__number">03</div>
                             <div className="step__icon">📊</div>
-                            <h3>Get Results</h3>
-                            <p>View calorie estimates, track your history, and analyze your nutrition patterns.</p>
+                            <h3>Choose Better</h3>
+                            <p>Use clear information to make smarter food decisions and maintain a healthier routine.</p>
                         </div>
                     </div>
                 </div>
@@ -170,10 +170,10 @@ export default function LandingPage() {
                             <span>🍎</span><span>🍌</span><span>🥕</span><span>🍊</span>
                         </div>
                         <h2>Ready to Start Your Nutrition Journey?</h2>
-                        <p>Join NutriVision and get instant calorie estimates powered by AI.</p>
+                        <p>Use NutriVision as an informative calorie and nutrition website built for better everyday choices.</p>
                         <div className="cta__actions">
-                            <Link to="/signup" className="btn btn-primary btn-lg">
-                                Create Free Account <ArrowRight size={18} />
+                            <Link to="/about" className="btn btn-primary btn-lg">
+                                Learn More <ArrowRight size={18} />
                             </Link>
                         </div>
                     </div>

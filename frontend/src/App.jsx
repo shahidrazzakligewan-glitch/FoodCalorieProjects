@@ -5,7 +5,6 @@ import Footer from './components/Footer';
 import LandingPage from './pages/LandingPage';
 import AboutPage from './pages/AboutPage';
 import ContactPage from './pages/ContactPage';
-import CalorieCalculator from './pages/CalorieCalculator';
 import SignIn from './pages/auth/SignIn';
 import SignUp from './pages/auth/SignUp';
 import ForgotPassword from './pages/auth/ForgotPassword';
@@ -44,7 +43,6 @@ function App() {
           <Route path="/" element={<LandingPage />} />
           <Route path="/about" element={<AboutPage />} />
           <Route path="/contact" element={<ContactPage />} />
-          <Route path="/calorie-calculator" element={<CalorieCalculator />} />
 
           {/* Auth Pages */}
           <Route path="/signin" element={<SignIn />} />

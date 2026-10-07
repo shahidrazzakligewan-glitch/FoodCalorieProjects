@@ -30,7 +30,6 @@ export default function Navbar() {
 
     const navLinks = [
         { to: '/', label: 'Home' },
-        { to: '/calorie-calculator', label: 'Calorie Calculator' },
         { to: '/about', label: 'About' },
         { to: '/contact', label: 'Contact' },
     ];
