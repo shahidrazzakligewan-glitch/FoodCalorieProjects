@@ -3,7 +3,7 @@ import { useAuth } from '../../context/AuthContext';
 import { supabase } from '../../lib/supabase';
 import { Upload, History, BarChart3, UserCircle, Loader2, Image, Trash2, Lock, ChevronDown, ChevronUp, LogOut, Home } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line, Legend } from 'recharts';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import './Dashboard.css';
 
 const API_URL = import.meta.env.DEV ? 'http://localhost:8000' : import.meta.env.VITE_API_URL;
@@ -28,6 +28,7 @@ function compressImage(file, maxWidth = 300) {
 
 export default function UserDashboard() {
     const { user, userProfile, updatePassword, signOut } = useAuth();
+    const navigate = useNavigate();
     const [activeTab, setActiveTab] = useState('upload');
 
     // Upload state
@@ -273,10 +274,7 @@ export default function UserDashboard() {
                 </nav>
 
                 <div className="dashboard__sidebar-footer">
-                    <Link to="/" className="dashboard__nav-item">
-                        <Home size={18} /> Back to Home
-                    </Link>
-                    <button className="dashboard__nav-item dashboard__nav-item--danger" onClick={signOut}>
+                    <button className="dashboard__nav-item dashboard__nav-item--danger" onClick={async () => { await signOut(); navigate('/'); }}>
                         <LogOut size={18} /> Sign Out
                     </button>
                 </div>

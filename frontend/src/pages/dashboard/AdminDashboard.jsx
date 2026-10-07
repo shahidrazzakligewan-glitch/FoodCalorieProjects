@@ -9,7 +9,7 @@ import {
     BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
     PieChart, Pie, Cell, LineChart, Line, Legend
 } from 'recharts';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import './Dashboard.css';
@@ -18,6 +18,7 @@ const COLORS = ['#FF6B35', '#1B998B', '#F7C948', '#A78BFA', '#EF4444', '#22C55E'
 
 export default function AdminDashboard() {
     const { user, signOut } = useAuth();
+    const navigate = useNavigate();
     const [activeTab, setActiveTab] = useState('users');
 
     // Data
@@ -274,8 +275,7 @@ export default function AdminDashboard() {
                 </nav>
 
                 <div className="dashboard__sidebar-footer">
-                    <Link to="/" className="dashboard__nav-item"><Home size={18} /> Back to Home</Link>
-                    <button className="dashboard__nav-item dashboard__nav-item--danger" onClick={signOut}>
+                    <button className="dashboard__nav-item dashboard__nav-item--danger" onClick={async () => { await signOut(); navigate('/'); }}>
                         <LogOut size={18} /> Sign Out
                     </button>
                 </div>

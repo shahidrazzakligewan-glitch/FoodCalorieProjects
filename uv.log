@@ -1,0 +1,12 @@
+INFO:     Started server process [24740]
+INFO:     Waiting for application startup.
+YOLOv5  2026-2-27 Python-3.14.0 torch-2.10.0+cpu CPU
+
+Fusing layers... 
+custom_YOLOv5s summary: 232 layers, 7265397 parameters, 0 gradients
+Adding AutoShape... 
+INFO:     Application startup complete.
+ERROR:    [Errno 10048] error while attempting to bind on address ('127.0.0.1', 8000): [winerror 10048] only one usage of each socket address (protocol/network address/port) is normally permitted
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+Γ£à Model loaded successfully!
